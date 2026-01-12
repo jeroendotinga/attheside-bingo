@@ -2,6 +2,7 @@ import Hero from "@/components/Hero";
 import HomepageIntro from "@/components/HomepageIntro";
 import Features from "@/components/Features";
 import EventInfo from "@/components/EventInfo";
+import UpcomingEvents from "@/components/UpcomingEvents";
 import RegistrationForm from "@/components/RegistrationForm";
 import Terms from "@/components/Terms";
 import Footer from "@/components/Footer";
@@ -13,6 +14,7 @@ const Index = () => {
       <HomepageIntro />
       <Features />
       <EventInfo />
+      <UpcomingEvents />
       <RegistrationForm />
       <Terms />
       <Footer />
