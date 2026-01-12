@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,10 +21,16 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAllEvents, Event } from '@/hooks/useEvents';
-import { Plus, Pencil, Trash2, Calendar, MapPin, Euro } from 'lucide-react';
+import { Plus, Pencil, Trash2, Ticket } from 'lucide-react';
+
+interface EventWithStats extends Event {
+  tickets_sold: number;
+  revenue: number;
+}
 
 const EventManager = () => {
   const { events, loading, fetchEvents } = useAllEvents();
+  const [eventsWithStats, setEventsWithStats] = useState<EventWithStats[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [formData, setFormData] = useState({
@@ -38,6 +44,42 @@ const EventManager = () => {
     max_tickets: '',
     is_active: true,
   });
+
+  // Fetch ticket stats for each event
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (events.length === 0) {
+        setEventsWithStats([]);
+        return;
+      }
+
+      const { data: registrations } = await supabase
+        .from('registrations')
+        .select('event_id, aantal_kaarten, totaal_prijs');
+
+      const statsMap = new Map<string, { tickets: number; revenue: number }>();
+      
+      registrations?.forEach((reg) => {
+        if (reg.event_id) {
+          const existing = statsMap.get(reg.event_id) || { tickets: 0, revenue: 0 };
+          statsMap.set(reg.event_id, {
+            tickets: existing.tickets + reg.aantal_kaarten,
+            revenue: existing.revenue + Number(reg.totaal_prijs),
+          });
+        }
+      });
+
+      const enrichedEvents = events.map((event) => ({
+        ...event,
+        tickets_sold: statsMap.get(event.id)?.tickets || 0,
+        revenue: statsMap.get(event.id)?.revenue || 0,
+      }));
+
+      setEventsWithStats(enrichedEvents);
+    };
+
+    fetchStats();
+  }, [events]);
 
   const resetForm = () => {
     setFormData({
@@ -132,8 +174,31 @@ const EventManager = () => {
     fetchEvents();
   };
 
+  const totalTicketsSold = eventsWithStats.reduce((sum, e) => sum + e.tickets_sold, 0);
+  const totalRevenue = eventsWithStats.reduce((sum, e) => sum + e.revenue, 0);
+
   return (
     <div className="space-y-6">
+      {/* Stats cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
+          <p className="text-muted-foreground text-xs sm:text-sm">Totaal Events</p>
+          <p className="text-2xl sm:text-3xl font-bold text-foreground">{eventsWithStats.length}</p>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
+          <p className="text-muted-foreground text-xs sm:text-sm">Actieve Events</p>
+          <p className="text-2xl sm:text-3xl font-bold text-neon-blue">{eventsWithStats.filter(e => e.is_active).length}</p>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
+          <p className="text-muted-foreground text-xs sm:text-sm">Totaal Tickets Verkocht</p>
+          <p className="text-2xl sm:text-3xl font-bold text-neon-pink">{totalTicketsSold}</p>
+        </div>
+        <div className="bg-card border border-neon-gold/30 rounded-xl p-4 sm:p-6">
+          <p className="text-muted-foreground text-xs sm:text-sm">Totaal Omzet</p>
+          <p className="text-2xl sm:text-3xl font-bold text-neon-gold">€{totalRevenue}</p>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-foreground">Evenementen</h2>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -272,42 +337,55 @@ const EventManager = () => {
             <TableRow className="border-border">
               <TableHead className="text-foreground">Event</TableHead>
               <TableHead className="text-foreground">Datum</TableHead>
-              <TableHead className="text-foreground">Locatie</TableHead>
-              <TableHead className="text-foreground text-right">Prijs</TableHead>
-              <TableHead className="text-foreground text-center">Actief</TableHead>
+              <TableHead className="text-foreground hidden md:table-cell">Locatie</TableHead>
+              <TableHead className="text-foreground text-center">Tickets</TableHead>
+              <TableHead className="text-foreground text-right">Omzet</TableHead>
+              <TableHead className="text-foreground text-center">Status</TableHead>
               <TableHead className="text-foreground text-right">Acties</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   Laden...
                 </TableCell>
               </TableRow>
-            ) : events.length === 0 ? (
+            ) : eventsWithStats.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   Nog geen events
                 </TableCell>
               </TableRow>
             ) : (
-              events.map((event) => (
+              eventsWithStats.map((event) => (
                 <TableRow key={event.id} className="border-border">
-                  <TableCell className="font-medium text-foreground">{event.title}</TableCell>
+                  <TableCell className="font-medium text-foreground">
+                    <div>
+                      <p>{event.title}</p>
+                      <p className="text-xs text-muted-foreground">€{event.price_per_ticket} per ticket</p>
+                    </div>
+                  </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(event.event_date).toLocaleDateString('nl-NL', {
                       weekday: 'short',
                       day: 'numeric',
                       month: 'short',
                       year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
                     })}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{event.location_name}</TableCell>
+                  <TableCell className="text-muted-foreground hidden md:table-cell">{event.location_name}</TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <Ticket className="w-4 h-4 text-neon-pink" />
+                      <span className="font-semibold text-neon-pink">{event.tickets_sold}</span>
+                      {event.max_tickets && (
+                        <span className="text-muted-foreground text-sm">/ {event.max_tickets}</span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-right font-semibold text-neon-gold">
-                    €{event.price_per_ticket}
+                    €{event.revenue}
                   </TableCell>
                   <TableCell className="text-center">
                     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
