@@ -20,7 +20,7 @@ const terms = [
 
 const Terms = () => {
   return (
-    <section className="py-10 sm:py-16 px-4 sm:px-6">
+    <section id="voorwaarden" className="py-10 sm:py-16 px-4 sm:px-6">
       <div className="max-w-3xl mx-auto">
         <Accordion type="single" collapsible defaultValue="terms" className="w-full">
           <AccordionItem value="terms" className="border-border">
