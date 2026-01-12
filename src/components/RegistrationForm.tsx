@@ -19,17 +19,16 @@ const RegistrationForm = () => {
     aantalKaarten: "1",
     email: "",
   });
+  // Honeypot field - should remain empty
+  const [website, setWebsite] = useState("");
 
-  // Fetch current ticket count
+  // Fetch current ticket count using safe RPC function
   useEffect(() => {
     const fetchTicketCount = async () => {
-      const { data, error } = await supabase
-        .from("registrations")
-        .select("aantal_kaarten");
+      const { data, error } = await supabase.rpc("get_tickets_sold");
       
-      if (!error && data) {
-        const total = data.reduce((sum, reg) => sum + reg.aantal_kaarten, 0);
-        setTicketsSold(total);
+      if (!error && data !== null) {
+        setTicketsSold(data);
       }
     };
 
@@ -45,6 +44,14 @@ const RegistrationForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Honeypot check - if filled, it's a bot
+    if (website) {
+      // Silently reject but show success to confuse bots
+      setIsSubmitted(true);
+      return;
+    }
+    
     const amount = parseInt(formData.aantalKaarten) || 0;
     
     if (amount < 1 || amount > 10) {
@@ -182,6 +189,20 @@ const RegistrationForm = () => {
               onChange={handleChange}
               className="bg-input border-border focus:border-neon-pink focus:ring-neon-pink/20 text-base"
               placeholder="06-12345678"
+            />
+          </div>
+          
+          {/* Honeypot field - hidden from real users, bots will fill it */}
+          <div className="absolute -left-[9999px] opacity-0 pointer-events-none" aria-hidden="true">
+            <Label htmlFor="website">Website (laat dit veld leeg)</Label>
+            <Input
+              id="website"
+              name="website"
+              type="text"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
             />
           </div>
           
