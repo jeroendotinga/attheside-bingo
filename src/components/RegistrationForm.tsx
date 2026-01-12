@@ -82,9 +82,8 @@ const RegistrationForm = () => {
       totaal_prijs: totalPrice,
     });
 
-    setIsLoading(false);
-
     if (error) {
+      setIsLoading(false);
       toast({
         title: "Er ging iets mis",
         description: "Probeer het later opnieuw of neem contact met ons op.",
@@ -93,6 +92,20 @@ const RegistrationForm = () => {
       return;
     }
 
+    // Send notification email (fire and forget - don't block on this)
+    supabase.functions.invoke("notify-registration", {
+      body: {
+        naam: formData.naam,
+        email: formData.email,
+        telefoon: formData.telefoon,
+        aantalKaarten: amount,
+        totaalPrijs: totalPrice,
+      },
+    }).catch(err => {
+      console.error("Failed to send notification email:", err);
+    });
+
+    setIsLoading(false);
     setIsSubmitted(true);
     toast({
       title: "Aanmelding ontvangen!",
