@@ -1,15 +1,18 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Send, CheckCircle, Ticket } from "lucide-react";
+import { Send, CheckCircle, Ticket, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const PRICE_PER_TICKET = 20;
 const MAX_TICKETS = 100;
 
 const RegistrationForm = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [ticketsSold, setTicketsSold] = useState(0);
   const [formData, setFormData] = useState({
     naam: "",
     telefoon: "",
@@ -17,14 +20,33 @@ const RegistrationForm = () => {
     email: "",
   });
 
+  // Fetch current ticket count
+  useEffect(() => {
+    const fetchTicketCount = async () => {
+      const { data, error } = await supabase
+        .from("registrations")
+        .select("aantal_kaarten");
+      
+      if (!error && data) {
+        const total = data.reduce((sum, reg) => sum + reg.aantal_kaarten, 0);
+        setTicketsSold(total);
+      }
+    };
+
+    fetchTicketCount();
+  }, []);
+
+  const ticketsRemaining = MAX_TICKETS - ticketsSold;
+
   const totalPrice = useMemo(() => {
     const amount = parseInt(formData.aantalKaarten) || 0;
     return amount * PRICE_PER_TICKET;
   }, [formData.aantalKaarten]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const amount = parseInt(formData.aantalKaarten) || 0;
+    
     if (amount < 1 || amount > 10) {
       toast({
         title: "Ongeldig aantal",
@@ -33,6 +55,37 @@ const RegistrationForm = () => {
       });
       return;
     }
+
+    if (amount > ticketsRemaining) {
+      toast({
+        title: "Niet genoeg kaarten",
+        description: `Er zijn nog maar ${ticketsRemaining} kaarten beschikbaar.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    const { error } = await supabase.from("registrations").insert({
+      naam: formData.naam,
+      email: formData.email,
+      telefoon: formData.telefoon,
+      aantal_kaarten: amount,
+      totaal_prijs: totalPrice,
+    });
+
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        title: "Er ging iets mis",
+        description: "Probeer het later opnieuw of neem contact met ons op.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitted(true);
     toast({
       title: "Aanmelding ontvangen!",
@@ -75,12 +128,18 @@ const RegistrationForm = () => {
           Reserveer je plek voor het feest!
         </p>
         
-        {/* Price info banner */}
-        <div className="bg-neon-gold/10 border border-neon-gold/30 rounded-xl p-4 mb-6 flex items-center justify-center gap-3">
-          <Ticket className="w-6 h-6 text-neon-gold" />
-          <p className="text-foreground font-semibold">
-            <span className="text-neon-gold text-xl">€20</span> per kaartje · Max 100 kaarten beschikbaar
-          </p>
+        {/* Price and availability info banner */}
+        <div className="bg-neon-gold/10 border border-neon-gold/30 rounded-xl p-4 mb-6 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2">
+            <Ticket className="w-5 h-5 sm:w-6 sm:h-6 text-neon-gold" />
+            <span className="text-foreground font-semibold">
+              <span className="text-neon-gold text-lg sm:text-xl">€20</span> per kaartje
+            </span>
+          </div>
+          <span className="hidden sm:inline text-muted-foreground">·</span>
+          <span className={`font-semibold ${ticketsRemaining < 20 ? 'text-neon-pink' : 'text-muted-foreground'}`}>
+            Nog {ticketsRemaining} van {MAX_TICKETS} kaarten beschikbaar
+          </span>
         </div>
         
         <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-5 sm:p-8 space-y-4 sm:space-y-6">
@@ -152,10 +211,22 @@ const RegistrationForm = () => {
           
           <Button 
             type="submit" 
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-5 sm:py-6 text-base sm:text-lg rounded-xl glow-pink transition-all duration-300 hover:scale-[1.02]"
+            disabled={isLoading || ticketsRemaining === 0}
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-5 sm:py-6 text-base sm:text-lg rounded-xl glow-pink transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-            Aanmelden – €{totalPrice}
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
+                Bezig met aanmelden...
+              </>
+            ) : ticketsRemaining === 0 ? (
+              "Uitverkocht"
+            ) : (
+              <>
+                <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                Aanmelden – €{totalPrice}
+              </>
+            )}
           </Button>
           
           <p className="text-xs sm:text-sm text-muted-foreground text-center">

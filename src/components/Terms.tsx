@@ -22,7 +22,7 @@ const Terms = () => {
   return (
     <section className="py-10 sm:py-16 px-4 sm:px-6">
       <div className="max-w-3xl mx-auto">
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="single" collapsible defaultValue="terms" className="w-full">
           <AccordionItem value="terms" className="border-border">
             <AccordionTrigger className="text-base sm:text-lg font-semibold hover:text-neon-pink transition-colors py-4">
               Algemene Voorwaarden
