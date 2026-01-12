@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -12,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { LogOut, Trash2, Loader2, Lock, RefreshCw, Download } from "lucide-react";
+import { LogOut, Trash2, Loader2, Lock, RefreshCw, Download, CheckCircle, XCircle } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 
 interface Registration {
@@ -22,6 +23,7 @@ interface Registration {
   telefoon: string;
   aantal_kaarten: number;
   totaal_prijs: number;
+  betaald: boolean;
   created_at: string;
 }
 
@@ -32,26 +34,51 @@ const Admin = () => {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      setLoading(false);
+      if (session) {
+        checkAdminStatus(session.user.id);
+      } else {
+        setLoading(false);
+        setIsAdmin(false);
+      }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      setLoading(false);
+      if (session) {
+        checkAdminStatus(session.user.id);
+      } else {
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (session) {
+  const checkAdminStatus = async (userId: string) => {
+    // Try to fetch registrations - if it works, user is admin
+    const { error } = await supabase
+      .from("registrations")
+      .select("id")
+      .limit(1);
+    
+    if (error) {
+      setIsAdmin(false);
+      toast({
+        title: "Geen toegang",
+        description: "Je hebt geen admin rechten.",
+        variant: "destructive",
+      });
+    } else {
+      setIsAdmin(true);
       fetchRegistrations();
     }
-  }, [session]);
+    setLoading(false);
+  };
 
   const fetchRegistrations = async () => {
     const { data, error } = await supabase
@@ -90,16 +117,12 @@ const Admin = () => {
       });
       return;
     }
-
-    toast({
-      title: "Ingelogd!",
-      description: "Welkom terug.",
-    });
   };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setSession(null);
+    setIsAdmin(false);
     toast({
       title: "Uitgelogd",
       description: "Je bent succesvol uitgelogd.",
@@ -133,14 +156,38 @@ const Admin = () => {
     fetchRegistrations();
   };
 
+  const handlePaymentToggle = async (id: string, currentStatus: boolean) => {
+    const { error } = await supabase
+      .from("registrations")
+      .update({ betaald: !currentStatus })
+      .eq("id", id);
+
+    if (error) {
+      toast({
+        title: "Fout bij bijwerken",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: currentStatus ? "Niet betaald" : "Betaald",
+      description: `Betaalstatus is bijgewerkt.`,
+    });
+    
+    fetchRegistrations();
+  };
+
   const exportToCSV = () => {
-    const headers = ["Naam", "Email", "Telefoon", "Aantal Kaarten", "Totaal Prijs", "Aangemeld Op"];
+    const headers = ["Naam", "Email", "Telefoon", "Aantal Kaarten", "Totaal Prijs", "Betaald", "Aangemeld Op"];
     const rows = registrations.map(r => [
       r.naam,
       r.email,
       r.telefoon,
       r.aantal_kaarten.toString(),
       `€${r.totaal_prijs}`,
+      r.betaald ? "Ja" : "Nee",
       new Date(r.created_at).toLocaleString("nl-NL"),
     ]);
     
@@ -154,6 +201,8 @@ const Admin = () => {
 
   const totalTickets = registrations.reduce((sum, r) => sum + r.aantal_kaarten, 0);
   const totalRevenue = registrations.reduce((sum, r) => sum + Number(r.totaal_prijs), 0);
+  const paidRevenue = registrations.filter(r => r.betaald).reduce((sum, r) => sum + Number(r.totaal_prijs), 0);
+  const paidCount = registrations.filter(r => r.betaald).length;
 
   if (loading) {
     return (
@@ -222,6 +271,26 @@ const Admin = () => {
     );
   }
 
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="w-full max-w-md text-center">
+          <div className="bg-card border border-border rounded-2xl p-6 sm:p-8">
+            <XCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-foreground mb-2">Geen toegang</h1>
+            <p className="text-muted-foreground mb-6">
+              Je account heeft geen admin rechten.
+            </p>
+            <Button onClick={handleLogout} variant="outline">
+              <LogOut className="w-4 h-4 mr-2" />
+              Uitloggen
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -260,7 +329,7 @@ const Admin = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 sm:mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6 sm:mb-8">
           <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
             <p className="text-muted-foreground text-xs sm:text-sm">Aanmeldingen</p>
             <p className="text-2xl sm:text-3xl font-bold text-foreground">{registrations.length}</p>
@@ -270,12 +339,17 @@ const Admin = () => {
             <p className="text-2xl sm:text-3xl font-bold text-neon-pink">{totalTickets}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
-            <p className="text-muted-foreground text-xs sm:text-sm">Kaarten Beschikbaar</p>
+            <p className="text-muted-foreground text-xs sm:text-sm">Beschikbaar</p>
             <p className="text-2xl sm:text-3xl font-bold text-neon-gold">{100 - totalTickets}</p>
           </div>
           <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
-            <p className="text-muted-foreground text-xs sm:text-sm">Totale Omzet</p>
-            <p className="text-2xl sm:text-3xl font-bold text-neon-blue">€{totalRevenue}</p>
+            <p className="text-muted-foreground text-xs sm:text-sm">Betaald</p>
+            <p className="text-2xl sm:text-3xl font-bold text-neon-blue">{paidCount}/{registrations.length}</p>
+          </div>
+          <div className="bg-card border border-neon-blue/30 rounded-xl p-4 sm:p-6 col-span-2 lg:col-span-1">
+            <p className="text-muted-foreground text-xs sm:text-sm">Omzet (betaald)</p>
+            <p className="text-2xl sm:text-3xl font-bold text-neon-blue">€{paidRevenue}</p>
+            <p className="text-xs text-muted-foreground">van €{totalRevenue} totaal</p>
           </div>
         </div>
 
@@ -298,6 +372,7 @@ const Admin = () => {
                   <TableHead className="text-foreground hidden sm:table-cell">Telefoon</TableHead>
                   <TableHead className="text-foreground text-center">Kaarten</TableHead>
                   <TableHead className="text-foreground text-right">Prijs</TableHead>
+                  <TableHead className="text-foreground text-center">Betaald</TableHead>
                   <TableHead className="text-foreground hidden md:table-cell">Datum</TableHead>
                   <TableHead className="text-foreground text-right">Actie</TableHead>
                 </TableRow>
@@ -305,7 +380,7 @@ const Admin = () => {
               <TableBody>
                 {registrations.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       Nog geen aanmeldingen
                     </TableCell>
                   </TableRow>
@@ -322,6 +397,18 @@ const Admin = () => {
                       </TableCell>
                       <TableCell className="text-right font-semibold text-neon-gold">
                         €{reg.totaal_prijs}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <button
+                          onClick={() => handlePaymentToggle(reg.id, reg.betaald)}
+                          className="inline-flex items-center justify-center"
+                        >
+                          {reg.betaald ? (
+                            <CheckCircle className="w-6 h-6 text-neon-blue" />
+                          ) : (
+                            <XCircle className="w-6 h-6 text-muted-foreground hover:text-neon-blue transition-colors" />
+                          )}
+                        </button>
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm hidden md:table-cell">
                         {new Date(reg.created_at).toLocaleDateString("nl-NL", {

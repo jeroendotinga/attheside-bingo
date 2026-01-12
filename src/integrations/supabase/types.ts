@@ -14,9 +14,25 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       registrations: {
         Row: {
           aantal_kaarten: number
+          betaald: boolean
           created_at: string
           email: string
           id: string
@@ -26,6 +42,7 @@ export type Database = {
         }
         Insert: {
           aantal_kaarten: number
+          betaald?: boolean
           created_at?: string
           email: string
           id?: string
@@ -35,6 +52,7 @@ export type Database = {
         }
         Update: {
           aantal_kaarten?: number
+          betaald?: boolean
           created_at?: string
           email?: string
           id?: string
