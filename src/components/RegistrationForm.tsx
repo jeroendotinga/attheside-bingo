@@ -29,11 +29,36 @@ const RegistrationForm = () => {
   });
   const [website, setWebsite] = useState("");
 
+  // Check for event ID in URL hash and select it
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      const eventMatch = hash.match(/event=([^&]+)/);
+      if (eventMatch && events.length > 0) {
+        const eventId = eventMatch[1];
+        const event = events.find(e => e.id === eventId);
+        if (event) {
+          setSelectedEvent(event);
+        }
+      }
+    };
+
+    // Check on mount and when hash changes
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [events]);
+
+  // Set default event if none selected
   useEffect(() => {
     if (events.length > 0 && !selectedEvent) {
-      const nextEvent = getNextEvent();
-      if (nextEvent) {
-        setSelectedEvent(nextEvent);
+      // Only set default if no event in URL
+      const hash = window.location.hash;
+      if (!hash.includes('event=')) {
+        const nextEvent = getNextEvent();
+        if (nextEvent) {
+          setSelectedEvent(nextEvent);
+        }
       }
     }
   }, [events, selectedEvent, getNextEvent]);
