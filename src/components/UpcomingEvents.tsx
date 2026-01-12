@@ -27,7 +27,9 @@ const UpcomingEvents = () => {
     return null;
   }
 
-  const scrollToRegistration = () => {
+  const scrollToRegistration = (eventId: string) => {
+    // Set the event ID in the URL hash
+    window.location.hash = `aanmelden?event=${eventId}`;
     const element = document.getElementById('aanmelden');
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
@@ -62,7 +64,7 @@ const UpcomingEvents = () => {
               return (
                 <div 
                   key={event.id}
-                  onClick={scrollToRegistration}
+                  onClick={() => scrollToRegistration(event.id)}
                   className="relative pl-10 sm:pl-14 cursor-pointer group"
                 >
                   {/* Timeline dot */}
