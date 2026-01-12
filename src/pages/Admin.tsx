@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -13,8 +13,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { LogOut, Trash2, Loader2, Lock, RefreshCw, Download, CheckCircle, XCircle } from "lucide-react";
+import { LogOut, Trash2, Loader2, Lock, RefreshCw, Download, CheckCircle, XCircle, Calendar, FileText, Users } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
+import EventManager from "@/components/admin/EventManager";
+import ContentEditor from "@/components/admin/ContentEditor";
 
 interface Registration {
   id: string;
@@ -25,6 +27,7 @@ interface Registration {
   totaal_prijs: number;
   betaald: boolean;
   created_at: string;
+  event_id: string | null;
 }
 
 const Admin = () => {
@@ -60,7 +63,6 @@ const Admin = () => {
   }, []);
 
   const checkAdminStatus = async (userId: string) => {
-    // Try to fetch registrations - if it works, user is admin
     const { error } = await supabase
       .from("registrations")
       .select("id")
@@ -328,113 +330,140 @@ const Admin = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6 sm:mb-8">
-          <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
-            <p className="text-muted-foreground text-xs sm:text-sm">Aanmeldingen</p>
-            <p className="text-2xl sm:text-3xl font-bold text-foreground">{registrations.length}</p>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
-            <p className="text-muted-foreground text-xs sm:text-sm">Kaarten Verkocht</p>
-            <p className="text-2xl sm:text-3xl font-bold text-neon-pink">{totalTickets}</p>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
-            <p className="text-muted-foreground text-xs sm:text-sm">Beschikbaar</p>
-            <p className="text-2xl sm:text-3xl font-bold text-neon-gold">{100 - totalTickets}</p>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
-            <p className="text-muted-foreground text-xs sm:text-sm">Betaald</p>
-            <p className="text-2xl sm:text-3xl font-bold text-neon-blue">{paidCount}/{registrations.length}</p>
-          </div>
-          <div className="bg-card border border-neon-blue/30 rounded-xl p-4 sm:p-6 col-span-2 lg:col-span-1">
-            <p className="text-muted-foreground text-xs sm:text-sm">Omzet (betaald)</p>
-            <p className="text-2xl sm:text-3xl font-bold text-neon-blue">€{paidRevenue}</p>
-            <p className="text-xs text-muted-foreground">van €{totalRevenue} totaal</p>
-          </div>
-        </div>
+        <Tabs defaultValue="registrations" className="space-y-6">
+          <TabsList className="bg-card border border-border">
+            <TabsTrigger value="registrations" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Users className="w-4 h-4 mr-2" />
+              Aanmeldingen
+            </TabsTrigger>
+            <TabsTrigger value="events" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Calendar className="w-4 h-4 mr-2" />
+              Evenementen
+            </TabsTrigger>
+            <TabsTrigger value="content" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <FileText className="w-4 h-4 mr-2" />
+              Content
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Export Button */}
-        <div className="mb-4 flex justify-end">
-          <Button variant="outline" onClick={exportToCSV} disabled={registrations.length === 0}>
-            <Download className="w-4 h-4 mr-2" />
-            Exporteer CSV
-          </Button>
-        </div>
+          <TabsContent value="registrations" className="space-y-6">
+            {/* Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
+                <p className="text-muted-foreground text-xs sm:text-sm">Aanmeldingen</p>
+                <p className="text-2xl sm:text-3xl font-bold text-foreground">{registrations.length}</p>
+              </div>
+              <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
+                <p className="text-muted-foreground text-xs sm:text-sm">Kaarten Verkocht</p>
+                <p className="text-2xl sm:text-3xl font-bold text-neon-pink">{totalTickets}</p>
+              </div>
+              <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
+                <p className="text-muted-foreground text-xs sm:text-sm">Totaal Omzet</p>
+                <p className="text-2xl sm:text-3xl font-bold text-neon-gold">€{totalRevenue}</p>
+              </div>
+              <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
+                <p className="text-muted-foreground text-xs sm:text-sm">Betaald</p>
+                <p className="text-2xl sm:text-3xl font-bold text-neon-blue">{paidCount}/{registrations.length}</p>
+              </div>
+              <div className="bg-card border border-neon-blue/30 rounded-xl p-4 sm:p-6 col-span-2 lg:col-span-1">
+                <p className="text-muted-foreground text-xs sm:text-sm">Omzet (betaald)</p>
+                <p className="text-2xl sm:text-3xl font-bold text-neon-blue">€{paidRevenue}</p>
+                <p className="text-xs text-muted-foreground">van €{totalRevenue} totaal</p>
+              </div>
+            </div>
 
-        {/* Table */}
-        <div className="bg-card border border-border rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border">
-                  <TableHead className="text-foreground">Naam</TableHead>
-                  <TableHead className="text-foreground">Email</TableHead>
-                  <TableHead className="text-foreground hidden sm:table-cell">Telefoon</TableHead>
-                  <TableHead className="text-foreground text-center">Kaarten</TableHead>
-                  <TableHead className="text-foreground text-right">Prijs</TableHead>
-                  <TableHead className="text-foreground text-center">Betaald</TableHead>
-                  <TableHead className="text-foreground hidden md:table-cell">Datum</TableHead>
-                  <TableHead className="text-foreground text-right">Actie</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {registrations.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                      Nog geen aanmeldingen
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  registrations.map((reg) => (
-                    <TableRow key={reg.id} className="border-border">
-                      <TableCell className="font-medium text-foreground">{reg.naam}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{reg.email}</TableCell>
-                      <TableCell className="text-muted-foreground hidden sm:table-cell">{reg.telefoon}</TableCell>
-                      <TableCell className="text-center">
-                        <span className="bg-neon-pink/20 text-neon-pink px-2 py-1 rounded-full text-sm font-semibold">
-                          {reg.aantal_kaarten}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold text-neon-gold">
-                        €{reg.totaal_prijs}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <button
-                          onClick={() => handlePaymentToggle(reg.id, reg.betaald)}
-                          className="inline-flex items-center justify-center"
-                        >
-                          {reg.betaald ? (
-                            <CheckCircle className="w-6 h-6 text-neon-blue" />
-                          ) : (
-                            <XCircle className="w-6 h-6 text-muted-foreground hover:text-neon-blue transition-colors" />
-                          )}
-                        </button>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm hidden md:table-cell">
-                        {new Date(reg.created_at).toLocaleDateString("nl-NL", {
-                          day: "numeric",
-                          month: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(reg.id)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
+            {/* Export Button */}
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={exportToCSV} disabled={registrations.length === 0}>
+                <Download className="w-4 h-4 mr-2" />
+                Exporteer CSV
+              </Button>
+            </div>
+
+            {/* Table */}
+            <div className="bg-card border border-border rounded-xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border">
+                      <TableHead className="text-foreground">Naam</TableHead>
+                      <TableHead className="text-foreground">Email</TableHead>
+                      <TableHead className="text-foreground hidden sm:table-cell">Telefoon</TableHead>
+                      <TableHead className="text-foreground text-center">Kaarten</TableHead>
+                      <TableHead className="text-foreground text-right">Prijs</TableHead>
+                      <TableHead className="text-foreground text-center">Betaald</TableHead>
+                      <TableHead className="text-foreground hidden md:table-cell">Datum</TableHead>
+                      <TableHead className="text-foreground text-right">Actie</TableHead>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+                  </TableHeader>
+                  <TableBody>
+                    {registrations.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                          Nog geen aanmeldingen
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      registrations.map((reg) => (
+                        <TableRow key={reg.id} className="border-border">
+                          <TableCell className="font-medium text-foreground">{reg.naam}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{reg.email}</TableCell>
+                          <TableCell className="text-muted-foreground hidden sm:table-cell">{reg.telefoon}</TableCell>
+                          <TableCell className="text-center">
+                            <span className="bg-neon-pink/20 text-neon-pink px-2 py-1 rounded-full text-sm font-semibold">
+                              {reg.aantal_kaarten}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right font-semibold text-neon-gold">
+                            €{reg.totaal_prijs}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <button
+                              onClick={() => handlePaymentToggle(reg.id, reg.betaald)}
+                              className="inline-flex items-center justify-center"
+                            >
+                              {reg.betaald ? (
+                                <CheckCircle className="w-6 h-6 text-neon-blue" />
+                              ) : (
+                                <XCircle className="w-6 h-6 text-muted-foreground hover:text-neon-blue transition-colors" />
+                              )}
+                            </button>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-sm hidden md:table-cell">
+                            {new Date(reg.created_at).toLocaleDateString("nl-NL", {
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(reg.id)}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="events">
+            <EventManager />
+          </TabsContent>
+
+          <TabsContent value="content">
+            <ContentEditor />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

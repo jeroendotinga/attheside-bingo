@@ -2,52 +2,71 @@ import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Send, CheckCircle, Ticket, Loader2 } from "lucide-react";
+import { Send, CheckCircle, Ticket, Loader2, Calendar, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
-const PRICE_PER_TICKET = 20;
+import { useEvents, Event } from "@/hooks/useEvents";
 
 const RegistrationForm = () => {
+  const { events, loading: eventsLoading, getNextEvent } = useEvents();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [ticketsSold, setTicketsSold] = useState(0);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [formData, setFormData] = useState({
     naam: "",
     telefoon: "",
     aantalKaarten: "1",
     email: "",
   });
-  // Honeypot field - should remain empty
   const [website, setWebsite] = useState("");
 
-  // Fetch current ticket count using safe RPC function
   useEffect(() => {
-    const fetchTicketCount = async () => {
-      const { data, error } = await supabase.rpc("get_tickets_sold");
-      
-      if (!error && data !== null) {
-        setTicketsSold(data);
+    if (events.length > 0 && !selectedEvent) {
+      const nextEvent = getNextEvent();
+      if (nextEvent) {
+        setSelectedEvent(nextEvent);
       }
-    };
-
-    fetchTicketCount();
-  }, []);
-
-  
+    }
+  }, [events, selectedEvent, getNextEvent]);
 
   const totalPrice = useMemo(() => {
     const amount = parseInt(formData.aantalKaarten) || 0;
-    return amount * PRICE_PER_TICKET;
-  }, [formData.aantalKaarten]);
+    const pricePerTicket = selectedEvent?.price_per_ticket || 20;
+    return amount * pricePerTicket;
+  }, [formData.aantalKaarten, selectedEvent]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Honeypot check - if filled, it's a bot
     if (website) {
-      // Silently reject but show success to confuse bots
       setIsSubmitted(true);
+      return;
+    }
+
+    if (!selectedEvent) {
+      toast({
+        title: "Selecteer een event",
+        description: "Kies eerst een event waarvoor je tickets wilt kopen.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!termsAccepted) {
+      toast({
+        title: "Voorwaarden accepteren",
+        description: "Je moet de algemene voorwaarden accepteren om door te gaan.",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -70,6 +89,7 @@ const RegistrationForm = () => {
       telefoon: formData.telefoon,
       aantal_kaarten: amount,
       totaal_prijs: totalPrice,
+      event_id: selectedEvent.id,
     });
 
     if (error) {
@@ -82,7 +102,6 @@ const RegistrationForm = () => {
       return;
     }
 
-    // Send notification email (fire and forget - don't block on this)
     supabase.functions.invoke("notify-registration", {
       body: {
         naam: formData.naam,
@@ -90,6 +109,13 @@ const RegistrationForm = () => {
         telefoon: formData.telefoon,
         aantalKaarten: amount,
         totaalPrijs: totalPrice,
+        eventTitle: selectedEvent.title,
+        eventDate: new Date(selectedEvent.event_date).toLocaleDateString('nl-NL', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        }),
       },
     }).catch(err => {
       console.error("Failed to send notification email:", err);
@@ -138,15 +164,72 @@ const RegistrationForm = () => {
           Reserveer je plek voor het feest!
         </p>
         
-        {/* Price info banner */}
-        <div className="bg-neon-gold/10 border border-neon-gold/30 rounded-xl p-4 mb-6 flex items-center justify-center gap-2">
-          <Ticket className="w-5 h-5 sm:w-6 sm:h-6 text-neon-gold" />
-          <span className="text-foreground font-semibold">
-            <span className="text-neon-gold text-lg sm:text-xl">€20</span> per kaartje
-          </span>
-        </div>
-        
         <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-5 sm:p-8 space-y-4 sm:space-y-6">
+          {/* Event Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="event" className="text-foreground text-sm sm:text-base">Kies je event</Label>
+            {eventsLoading ? (
+              <div className="h-10 bg-input rounded-md animate-pulse" />
+            ) : (
+              <Select
+                value={selectedEvent?.id || ""}
+                onValueChange={(value) => {
+                  const event = events.find(e => e.id === value);
+                  setSelectedEvent(event || null);
+                }}
+              >
+                <SelectTrigger className="bg-input border-border">
+                  <SelectValue placeholder="Selecteer een event" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  {events.map((event) => {
+                    const eventDate = new Date(event.event_date);
+                    return (
+                      <SelectItem key={event.id} value={event.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{event.title}</span>
+                          <span className="text-muted-foreground text-xs">
+                            - {eventDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          {/* Selected Event Info */}
+          {selectedEvent && (
+            <div className="bg-neon-gold/10 border border-neon-gold/30 rounded-xl p-4 space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Calendar className="w-4 h-4 text-neon-gold" />
+                <span className="text-foreground">
+                  {new Date(selectedEvent.event_date).toLocaleDateString('nl-NL', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <MapPin className="w-4 h-4 text-neon-blue" />
+                <span className="text-foreground">{selectedEvent.location_name}, {selectedEvent.location_city}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Ticket className="w-4 h-4 text-neon-gold" />
+                <span className="font-semibold">
+                  <span className="text-neon-gold text-lg">€{selectedEvent.price_per_ticket}</span>
+                  <span className="text-muted-foreground text-sm ml-1">per kaartje</span>
+                </span>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="naam" className="text-foreground text-sm sm:text-base">Naam</Label>
             <Input
@@ -189,7 +272,7 @@ const RegistrationForm = () => {
             />
           </div>
           
-          {/* Honeypot field - hidden from real users, bots will fill it */}
+          {/* Honeypot */}
           <div className="absolute -left-[9999px] opacity-0 pointer-events-none" aria-hidden="true">
             <Label htmlFor="website">Website (laat dit veld leeg)</Label>
             <Input
@@ -219,6 +302,19 @@ const RegistrationForm = () => {
               placeholder="1"
             />
           </div>
+
+          {/* Terms Checkbox */}
+          <div className="flex items-start space-x-3 p-4 bg-muted/30 rounded-xl border border-border">
+            <Checkbox
+              id="terms"
+              checked={termsAccepted}
+              onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+              className="mt-0.5"
+            />
+            <Label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+              Ik heb de <a href="#voorwaarden" className="text-neon-pink hover:underline">algemene voorwaarden</a> gelezen en ga hiermee akkoord
+            </Label>
+          </div>
           
           {/* Total price display */}
           <div className="bg-muted/50 rounded-xl p-4 flex items-center justify-between">
@@ -228,7 +324,7 @@ const RegistrationForm = () => {
           
           <Button 
             type="submit" 
-            disabled={isLoading}
+            disabled={isLoading || !selectedEvent}
             className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-5 sm:py-6 text-base sm:text-lg rounded-xl glow-pink transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (

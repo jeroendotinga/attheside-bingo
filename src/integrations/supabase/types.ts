@@ -29,12 +29,55 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          created_at: string
+          event_date: string
+          id: string
+          is_active: boolean
+          location_address: string
+          location_city: string
+          location_name: string
+          max_tickets: number | null
+          price_per_ticket: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_date: string
+          id?: string
+          is_active?: boolean
+          location_address: string
+          location_city: string
+          location_name: string
+          max_tickets?: number | null
+          price_per_ticket?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_date?: string
+          id?: string
+          is_active?: boolean
+          location_address?: string
+          location_city?: string
+          location_name?: string
+          max_tickets?: number | null
+          price_per_ticket?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       registrations: {
         Row: {
           aantal_kaarten: number
           betaald: boolean
           created_at: string
           email: string
+          event_id: string | null
           id: string
           naam: string
           telefoon: string
@@ -45,6 +88,7 @@ export type Database = {
           betaald?: boolean
           created_at?: string
           email: string
+          event_id?: string | null
           id?: string
           naam: string
           telefoon: string
@@ -55,10 +99,40 @@ export type Database = {
           betaald?: boolean
           created_at?: string
           email?: string
+          event_id?: string | null
           id?: string
           naam?: string
           telefoon?: string
           totaal_prijs?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_content: {
+        Row: {
+          content_html: string
+          content_key: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          content_html?: string
+          content_key: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          content_html?: string
+          content_key?: string
+          id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -68,6 +142,10 @@ export type Database = {
     }
     Functions: {
       get_tickets_sold: { Args: never; Returns: number }
+      get_tickets_sold_for_event: {
+        Args: { event_uuid: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
