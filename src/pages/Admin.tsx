@@ -1,9 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -13,10 +20,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { LogOut, Trash2, Loader2, Lock, RefreshCw, Download, CheckCircle, XCircle, Calendar, FileText, Users } from "lucide-react";
+import { LogOut, Trash2, Loader2, Lock, RefreshCw, Download, CheckCircle, XCircle, Calendar, FileText, Users, Filter } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import EventManager from "@/components/admin/EventManager";
 import ContentEditor from "@/components/admin/ContentEditor";
+import { useAllEvents, Event } from "@/hooks/useEvents";
 
 interface Registration {
   id: string;
@@ -38,6 +46,22 @@ const Admin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [eventFilter, setEventFilter] = useState<string>("all");
+  const { events } = useAllEvents();
+
+  // Create a map of event_id to event for quick lookup
+  const eventsMap = useMemo(() => {
+    const map = new Map<string, Event>();
+    events.forEach((event) => map.set(event.id, event));
+    return map;
+  }, [events]);
+
+  // Filter registrations by event
+  const filteredRegistrations = useMemo(() => {
+    if (eventFilter === "all") return registrations;
+    if (eventFilter === "none") return registrations.filter((r) => !r.event_id);
+    return registrations.filter((r) => r.event_id === eventFilter);
+  }, [registrations, eventFilter]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -182,18 +206,20 @@ const Admin = () => {
   };
 
   const exportToCSV = () => {
-    const headers = ["Naam", "Email", "Telefoon", "Aantal Kaarten", "Totaal Prijs", "Betaald", "Aangemeld Op"];
-    const rows = registrations.map(r => [
+    const dataToExport = filteredRegistrations;
+    const headers = ["Naam", "Email", "Telefoon", "Event", "Aantal Kaarten", "Totaal Prijs", "Betaald", "Aangemeld Op"];
+    const rows = dataToExport.map(r => [
       r.naam,
       r.email,
       r.telefoon,
+      r.event_id ? eventsMap.get(r.event_id)?.title || "Onbekend" : "Geen event",
       r.aantal_kaarten.toString(),
       `€${r.totaal_prijs}`,
       r.betaald ? "Ja" : "Nee",
       new Date(r.created_at).toLocaleString("nl-NL"),
     ]);
     
-    const csvContent = [headers, ...rows].map(row => row.join(",")).join("\n");
+    const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -201,10 +227,10 @@ const Admin = () => {
     link.click();
   };
 
-  const totalTickets = registrations.reduce((sum, r) => sum + r.aantal_kaarten, 0);
-  const totalRevenue = registrations.reduce((sum, r) => sum + Number(r.totaal_prijs), 0);
-  const paidRevenue = registrations.filter(r => r.betaald).reduce((sum, r) => sum + Number(r.totaal_prijs), 0);
-  const paidCount = registrations.filter(r => r.betaald).length;
+  const totalTickets = filteredRegistrations.reduce((sum, r) => sum + r.aantal_kaarten, 0);
+  const totalRevenue = filteredRegistrations.reduce((sum, r) => sum + Number(r.totaal_prijs), 0);
+  const paidRevenue = filteredRegistrations.filter(r => r.betaald).reduce((sum, r) => sum + Number(r.totaal_prijs), 0);
+  const paidCount = filteredRegistrations.filter(r => r.betaald).length;
 
   if (loading) {
     return (
@@ -347,11 +373,37 @@ const Admin = () => {
           </TabsList>
 
           <TabsContent value="registrations" className="space-y-6">
+            {/* Event Filter */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-muted-foreground" />
+                <Select value={eventFilter} onValueChange={setEventFilter}>
+                  <SelectTrigger className="w-[280px] bg-input border-border">
+                    <SelectValue placeholder="Filter op event" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border">
+                    <SelectItem value="all">Alle aanmeldingen</SelectItem>
+                    <SelectItem value="none">Zonder event</SelectItem>
+                    {events.map((event) => (
+                      <SelectItem key={event.id} value={event.id}>
+                        {event.title} - {new Date(event.event_date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {eventFilter !== "all" && (
+                <Button variant="ghost" size="sm" onClick={() => setEventFilter("all")}>
+                  Filter wissen
+                </Button>
+              )}
+            </div>
+
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
                 <p className="text-muted-foreground text-xs sm:text-sm">Aanmeldingen</p>
-                <p className="text-2xl sm:text-3xl font-bold text-foreground">{registrations.length}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-foreground">{filteredRegistrations.length}</p>
               </div>
               <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
                 <p className="text-muted-foreground text-xs sm:text-sm">Kaarten Verkocht</p>
@@ -363,7 +415,7 @@ const Admin = () => {
               </div>
               <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
                 <p className="text-muted-foreground text-xs sm:text-sm">Betaald</p>
-                <p className="text-2xl sm:text-3xl font-bold text-neon-blue">{paidCount}/{registrations.length}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-neon-blue">{paidCount}/{filteredRegistrations.length}</p>
               </div>
               <div className="bg-card border border-neon-blue/30 rounded-xl p-4 sm:p-6 col-span-2 lg:col-span-1">
                 <p className="text-muted-foreground text-xs sm:text-sm">Omzet (betaald)</p>
@@ -374,7 +426,7 @@ const Admin = () => {
 
             {/* Export Button */}
             <div className="flex justify-end">
-              <Button variant="outline" onClick={exportToCSV} disabled={registrations.length === 0}>
+              <Button variant="outline" onClick={exportToCSV} disabled={filteredRegistrations.length === 0}>
                 <Download className="w-4 h-4 mr-2" />
                 Exporteer CSV
               </Button>
@@ -387,7 +439,8 @@ const Admin = () => {
                   <TableHeader>
                     <TableRow className="border-border">
                       <TableHead className="text-foreground">Naam</TableHead>
-                      <TableHead className="text-foreground">Email</TableHead>
+                      <TableHead className="text-foreground">Event</TableHead>
+                      <TableHead className="text-foreground hidden lg:table-cell">Email</TableHead>
                       <TableHead className="text-foreground hidden sm:table-cell">Telefoon</TableHead>
                       <TableHead className="text-foreground text-center">Kaarten</TableHead>
                       <TableHead className="text-foreground text-right">Prijs</TableHead>
@@ -397,58 +450,79 @@ const Admin = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {registrations.length === 0 ? (
+                    {filteredRegistrations.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                          Nog geen aanmeldingen
+                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                          {eventFilter !== "all" ? "Geen aanmeldingen voor dit event" : "Nog geen aanmeldingen"}
                         </TableCell>
                       </TableRow>
                     ) : (
-                      registrations.map((reg) => (
-                        <TableRow key={reg.id} className="border-border">
-                          <TableCell className="font-medium text-foreground">{reg.naam}</TableCell>
-                          <TableCell className="text-muted-foreground text-sm">{reg.email}</TableCell>
-                          <TableCell className="text-muted-foreground hidden sm:table-cell">{reg.telefoon}</TableCell>
-                          <TableCell className="text-center">
-                            <span className="bg-neon-pink/20 text-neon-pink px-2 py-1 rounded-full text-sm font-semibold">
-                              {reg.aantal_kaarten}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right font-semibold text-neon-gold">
-                            €{reg.totaal_prijs}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <button
-                              onClick={() => handlePaymentToggle(reg.id, reg.betaald)}
-                              className="inline-flex items-center justify-center"
-                            >
-                              {reg.betaald ? (
-                                <CheckCircle className="w-6 h-6 text-neon-blue" />
+                      filteredRegistrations.map((reg) => {
+                        const event = reg.event_id ? eventsMap.get(reg.event_id) : null;
+                        return (
+                          <TableRow key={reg.id} className="border-border">
+                            <TableCell className="font-medium text-foreground">{reg.naam}</TableCell>
+                            <TableCell>
+                              {event ? (
+                                <div className="flex flex-col">
+                                  <span className="text-sm text-foreground font-medium truncate max-w-[150px]">
+                                    {event.title}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {new Date(event.event_date).toLocaleDateString('nl-NL', {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      year: 'numeric',
+                                    })}
+                                  </span>
+                                </div>
                               ) : (
-                                <XCircle className="w-6 h-6 text-muted-foreground hover:text-neon-blue transition-colors" />
+                                <span className="text-xs text-muted-foreground italic">Geen event</span>
                               )}
-                            </button>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground text-sm hidden md:table-cell">
-                            {new Date(reg.created_at).toLocaleDateString("nl-NL", {
-                              day: "numeric",
-                              month: "short",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(reg.id)}
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm hidden lg:table-cell">{reg.email}</TableCell>
+                            <TableCell className="text-muted-foreground hidden sm:table-cell">{reg.telefoon}</TableCell>
+                            <TableCell className="text-center">
+                              <span className="bg-neon-pink/20 text-neon-pink px-2 py-1 rounded-full text-sm font-semibold">
+                                {reg.aantal_kaarten}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right font-semibold text-neon-gold">
+                              €{reg.totaal_prijs}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <button
+                                onClick={() => handlePaymentToggle(reg.id, reg.betaald)}
+                                className="inline-flex items-center justify-center"
+                              >
+                                {reg.betaald ? (
+                                  <CheckCircle className="w-6 h-6 text-neon-blue" />
+                                ) : (
+                                  <XCircle className="w-6 h-6 text-muted-foreground hover:text-neon-blue transition-colors" />
+                                )}
+                              </button>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm hidden md:table-cell">
+                              {new Date(reg.created_at).toLocaleDateString("nl-NL", {
+                                day: "numeric",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(reg.id)}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
                     )}
                   </TableBody>
                 </Table>
