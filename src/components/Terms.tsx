@@ -20,21 +20,21 @@ const terms = [
 
 const Terms = () => {
   return (
-    <section className="py-16 px-4">
+    <section className="py-10 sm:py-16 px-4 sm:px-6">
       <div className="max-w-3xl mx-auto">
         <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="terms" className="border-border">
-            <AccordionTrigger className="text-lg font-semibold hover:text-neon-pink transition-colors">
+            <AccordionTrigger className="text-base sm:text-lg font-semibold hover:text-neon-pink transition-colors py-4">
               Algemene Voorwaarden
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-4 pt-4">
-                <h3 className="text-xl font-bold text-foreground mb-4">
+                <h3 className="text-lg sm:text-xl font-bold text-foreground mb-4">
                   Algemene voorwaarden – De Grote Bingo Sing a Long Show
                 </h3>
-                <ol className="list-decimal list-inside space-y-3 text-muted-foreground">
+                <ol className="list-decimal list-outside ml-4 sm:ml-6 space-y-2 sm:space-y-3 text-muted-foreground text-sm sm:text-base">
                   {terms.map((term, index) => (
-                    <li key={index} className="leading-relaxed">
+                    <li key={index} className="leading-relaxed pl-1">
                       {term}
                     </li>
                   ))}
