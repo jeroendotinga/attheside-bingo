@@ -1,22 +1,22 @@
-import Hero from "@/components/Hero";
+import Navigation from "@/components/Navigation";
+import HomeHero from "@/components/HomeHero";
 import HomepageIntro from "@/components/HomepageIntro";
-import Features from "@/components/Features";
-import EventInfo from "@/components/EventInfo";
-import UpcomingEvents from "@/components/UpcomingEvents";
-import RegistrationForm from "@/components/RegistrationForm";
-import Terms from "@/components/Terms";
+import HowItWorks from "@/components/HowItWorks";
+import HomeEventTeaser from "@/components/HomeEventTeaser";
 import Footer from "@/components/Footer";
 
 const Index = () => {
   return (
     <main className="min-h-screen bg-background overflow-x-hidden">
-      <Hero />
+      <Navigation />
+      
+      {/* Spacer for fixed nav */}
+      <div className="h-16 sm:h-20" />
+      
+      <HomeHero />
       <HomepageIntro />
-      <Features />
-      <EventInfo />
-      <UpcomingEvents />
-      <RegistrationForm />
-      <Terms />
+      <HowItWorks />
+      <HomeEventTeaser />
       <Footer />
     </main>
   );
