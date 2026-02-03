@@ -1,5 +1,6 @@
 import logo from "@/assets/logo.png";
 import { Link } from "react-router-dom";
+import SocialLinks from "@/components/SocialLinks";
 
 const HomeHero = () => {
   return (
@@ -35,6 +36,11 @@ const HomeHero = () => {
           <span className="text-neon-gold font-semibold"> karaoke</span> en 
           <span className="text-neon-purple font-semibold"> dansen</span>.
         </p>
+        
+        {/* Social Links */}
+        <div className="mt-6 sm:mt-8 flex justify-center">
+          <SocialLinks iconSize="w-7 h-7 sm:w-8 sm:h-8" />
+        </div>
         
         <Link 
           to="/agenda"

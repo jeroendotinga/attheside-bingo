@@ -1,6 +1,7 @@
 import Navigation from "@/components/Navigation";
 import HomeHero from "@/components/HomeHero";
 import HomepageIntro from "@/components/HomepageIntro";
+import HomepageSection from "@/components/HomepageSection";
 import HowItWorks from "@/components/HowItWorks";
 import HomeEventTeaser from "@/components/HomeEventTeaser";
 import Footer from "@/components/Footer";
@@ -15,6 +16,8 @@ const Index = () => {
       
       <HomeHero />
       <HomepageIntro />
+      <HomepageSection contentKey="homepage_about" />
+      <HomepageSection contentKey="homepage_audience" />
       <HowItWorks />
       <HomeEventTeaser />
       <Footer />
