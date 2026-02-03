@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 const HomepageIntro = () => {
   const [content, setContent] = useState<string>('');
@@ -33,7 +34,7 @@ const HomepageIntro = () => {
           className="bg-card/80 backdrop-blur-sm border border-border rounded-2xl p-6 sm:p-8 prose prose-invert max-w-none
             [&_p]:text-muted-foreground [&_p]:text-sm [&_p]:sm:text-base [&_p]:mb-4 [&_p]:last:mb-0
             [&_a]:text-neon-pink [&_a]:hover:text-neon-pink/80"
-          dangerouslySetInnerHTML={{ __html: content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
         />
       </div>
     </section>

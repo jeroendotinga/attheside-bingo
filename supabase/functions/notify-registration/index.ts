@@ -7,6 +7,18 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+/**
+ * Escapes HTML special characters to prevent XSS attacks in email content.
+ */
+const escapeHtml = (unsafe: string): string => {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
 interface RegistrationNotificationRequest {
   naam: string;
   email: string;
@@ -34,6 +46,11 @@ serve(async (req: Request): Promise<Response> => {
 
     const { naam, email, telefoon, aantalKaarten, totaalPrijs }: RegistrationNotificationRequest = await req.json();
 
+    // Escape all user inputs to prevent XSS in email content
+    const safeNaam = escapeHtml(naam);
+    const safeEmail = escapeHtml(email);
+    const safeTelefoon = escapeHtml(telefoon);
+
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -43,7 +60,7 @@ serve(async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "De Grote Bingo Sing a Long Show <onboarding@resend.dev>",
         to: ["jeroen@attheside.nl"],
-        subject: `Nieuwe aanmelding: ${naam} (${aantalKaarten} kaart${aantalKaarten > 1 ? 'en' : ''})`,
+        subject: `Nieuwe aanmelding: ${safeNaam} (${aantalKaarten} kaart${aantalKaarten > 1 ? 'en' : ''})`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h1 style="color: #ec4899;">Nieuwe Aanmelding!</h1>
@@ -52,15 +69,15 @@ serve(async (req: Request): Promise<Response> => {
             <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
               <tr>
                 <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Naam:</td>
-                <td style="padding: 10px; border-bottom: 1px solid #eee;">${naam}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;">${safeNaam}</td>
               </tr>
               <tr>
                 <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Email:</td>
-                <td style="padding: 10px; border-bottom: 1px solid #eee;"><a href="mailto:${email}">${email}</a></td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;"><a href="mailto:${safeEmail}">${safeEmail}</a></td>
               </tr>
               <tr>
                 <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Telefoon:</td>
-                <td style="padding: 10px; border-bottom: 1px solid #eee;"><a href="tel:${telefoon}">${telefoon}</a></td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;"><a href="tel:${safeTelefoon}">${safeTelefoon}</a></td>
               </tr>
               <tr>
                 <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Aantal kaarten:</td>
@@ -73,7 +90,7 @@ serve(async (req: Request): Promise<Response> => {
             </table>
             
             <p style="color: #666; font-size: 14px;">
-              Vergeet niet om een betaallink te sturen naar ${email}!
+              Vergeet niet om een betaallink te sturen naar ${safeEmail}!
             </p>
             
             <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
@@ -90,7 +107,7 @@ serve(async (req: Request): Promise<Response> => {
     if (!emailResponse.ok) {
       console.error("Resend API error:", result);
       return new Response(
-        JSON.stringify({ error: result }),
+        JSON.stringify({ error: "Email could not be sent" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -101,10 +118,10 @@ serve(async (req: Request): Promise<Response> => {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in notify-registration function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "An unexpected error occurred" }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
