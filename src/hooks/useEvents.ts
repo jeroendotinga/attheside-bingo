@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface Event {
   id: string;
   title: string;
+  description: string | null;
   event_date: string;
   location_name: string;
   location_address: string;
