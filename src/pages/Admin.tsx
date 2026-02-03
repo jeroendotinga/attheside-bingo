@@ -25,6 +25,7 @@ import type { Session } from "@supabase/supabase-js";
 import EventManager from "@/components/admin/EventManager";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { useAllEvents, Event } from "@/hooks/useEvents";
+import { sanitizeErrorMessage } from "@/lib/sanitize";
 
 interface Registration {
   id: string;
@@ -115,7 +116,7 @@ const Admin = () => {
     if (error) {
       toast({
         title: "Fout bij ophalen",
-        description: error.message,
+        description: sanitizeErrorMessage(error, 'fetchRegistrations'),
         variant: "destructive",
       });
       return;
@@ -168,7 +169,7 @@ const Admin = () => {
     if (error) {
       toast({
         title: "Fout bij verwijderen",
-        description: error.message,
+        description: sanitizeErrorMessage(error, 'handleDelete'),
         variant: "destructive",
       });
       return;
@@ -191,7 +192,7 @@ const Admin = () => {
     if (error) {
       toast({
         title: "Fout bij bijwerken",
-        description: error.message,
+        description: sanitizeErrorMessage(error, 'handlePaymentToggle'),
         variant: "destructive",
       });
       return;

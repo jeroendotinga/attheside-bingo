@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 interface HomepageSectionProps {
   contentKey: string;
@@ -54,7 +55,7 @@ const HomepageSection = ({ contentKey, className = '' }: HomepageSectionProps) =
             [&_li]:bg-muted/50 [&_li]:rounded-lg [&_li]:p-3 [&_li]:text-sm [&_li]:sm:text-base [&_li]:text-muted-foreground
             [&_strong]:text-foreground [&_strong]:font-semibold
             [&_a]:text-primary [&_a]:hover:text-primary/80"
-          dangerouslySetInnerHTML={{ __html: content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
         />
       </div>
     </section>
