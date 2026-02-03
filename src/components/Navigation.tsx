@@ -19,12 +19,12 @@ const Navigation = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16 sm:h-20">
-          {/* Logo */}
+          {/* Logo - meer prominent */}
           <Link to="/" className="flex items-center">
             <img 
               src={logo} 
               alt="At The Side Bingo" 
-              className="h-10 sm:h-14 w-auto drop-shadow-[0_0_10px_rgba(236,72,153,0.3)]"
+              className="h-12 sm:h-16 md:h-18 w-auto drop-shadow-[0_0_15px_rgba(236,72,153,0.4)] hover:drop-shadow-[0_0_20px_rgba(236,72,153,0.6)] transition-all duration-300"
             />
           </Link>
 
