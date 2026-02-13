@@ -25,32 +25,20 @@ const reasons = [
 
 const WhyUsSection = () => {
   return (
-    <section className="py-16 sm:py-24 px-4 sm:px-6 bg-card/50">
+    <section className="py-12 sm:py-16 px-4 sm:px-6 bg-card/50">
       <div className="max-w-4xl mx-auto">
-        {/* Section header */}
-        <div className="text-center mb-12 sm:mb-16">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Waarom <span className="text-neon-purple">At The Side Bingo</span>?
-          </h2>
-          <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-            Dit is geen gewone bingo – dit is een feest
-          </p>
-        </div>
+        <h2 className="text-2xl sm:text-3xl font-bold text-foreground text-center mb-6 sm:mb-8">
+          Waarom <span className="text-neon-purple">At The Side Bingo</span>?
+        </h2>
 
-        {/* Reasons list */}
-        <div className="space-y-4 sm:space-y-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {reasons.map((reason, index) => (
             <div
               key={index}
-              className="flex items-center gap-4 sm:gap-5 p-4 sm:p-5 rounded-xl bg-card border border-border hover:border-neon-pink/30 hover:bg-neon-pink/5 transition-all duration-300 group"
+              className="flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-card border border-border hover:border-neon-pink/30 transition-all duration-300"
             >
-              <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-neon-pink/10 flex items-center justify-center group-hover:bg-neon-pink/20 transition-colors">
-                <Check className="w-5 h-5 sm:w-6 sm:h-6 text-neon-pink" />
-              </div>
-              <div className="flex items-center gap-3 flex-1">
-                <reason.icon className="w-5 h-5 text-muted-foreground hidden sm:block" />
-                <p className="text-foreground font-medium text-base sm:text-lg">{reason.text}</p>
-              </div>
+              <Check className="w-5 h-5 text-neon-pink flex-shrink-0" />
+              <p className="text-foreground font-medium text-sm sm:text-base">{reason.text}</p>
             </div>
           ))}
         </div>
