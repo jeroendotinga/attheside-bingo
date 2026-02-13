@@ -3,9 +3,8 @@ import HeroSection from "@/components/home/HeroSection";
 import WhatIsSection from "@/components/home/WhatIsSection";
 import ForWhoSection from "@/components/home/ForWhoSection";
 import HowItWorksSection from "@/components/home/HowItWorksSection";
-import WhyUsSection from "@/components/home/WhyUsSection";
 import ReviewsSection from "@/components/home/ReviewsSection";
-import CtaSection from "@/components/home/CtaSection";
+import ContactFormSection from "@/components/home/ContactFormSection";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -20,9 +19,8 @@ const Index = () => {
       <WhatIsSection />
       <ForWhoSection />
       <HowItWorksSection />
-      <WhyUsSection />
       <ReviewsSection />
-      <CtaSection />
+      <ContactFormSection />
       <Footer />
     </main>
   );
