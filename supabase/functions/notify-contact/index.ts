@@ -7,9 +7,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-/**
- * Escapes HTML special characters to prevent XSS attacks in email content.
- */
 const escapeHtml = (unsafe: string): string => {
   return unsafe
     .replace(/&/g, "&amp;")
@@ -19,23 +16,20 @@ const escapeHtml = (unsafe: string): string => {
     .replace(/'/g, "&#039;");
 };
 
-interface RegistrationNotificationRequest {
+interface ContactRequest {
   naam: string;
   email: string;
-  telefoon: string;
-  aantalKaarten: number;
-  totaalPrijs: number;
+  bericht: string;
 }
 
 serve(async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    
+
     if (!RESEND_API_KEY) {
       console.error("RESEND_API_KEY not configured");
       return new Response(
@@ -44,12 +38,11 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const { naam, email, telefoon, aantalKaarten, totaalPrijs }: RegistrationNotificationRequest = await req.json();
+    const { naam, email, bericht }: ContactRequest = await req.json();
 
-    // Escape all user inputs to prevent XSS in email content
     const safeNaam = escapeHtml(naam);
     const safeEmail = escapeHtml(email);
-    const safeTelefoon = escapeHtml(telefoon);
+    const safeBericht = escapeHtml(bericht);
 
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -60,11 +53,11 @@ serve(async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "De Grote Bingo Sing a Long Show <onboarding@resend.dev>",
         to: ["info@singalongbingoshow.nl"],
-        subject: `Nieuwe aanmelding: ${safeNaam} (${aantalKaarten} kaart${aantalKaarten > 1 ? 'en' : ''})`,
+        subject: `Nieuw contactbericht van ${safeNaam}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #ec4899;">Nieuwe Aanmelding!</h1>
-            <p>Er is een nieuwe aanmelding binnengekomen voor De Grote Bingo Sing a Long Show:</p>
+            <h1 style="color: #ec4899;">Nieuw Contactbericht!</h1>
+            <p>Er is een nieuw bericht binnengekomen via het contactformulier:</p>
             
             <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
               <tr>
@@ -76,22 +69,10 @@ serve(async (req: Request): Promise<Response> => {
                 <td style="padding: 10px; border-bottom: 1px solid #eee;"><a href="mailto:${safeEmail}">${safeEmail}</a></td>
               </tr>
               <tr>
-                <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Telefoon:</td>
-                <td style="padding: 10px; border-bottom: 1px solid #eee;"><a href="tel:${safeTelefoon}">${safeTelefoon}</a></td>
-              </tr>
-              <tr>
-                <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Aantal kaarten:</td>
-                <td style="padding: 10px; border-bottom: 1px solid #eee;">${aantalKaarten}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Totaal bedrag:</td>
-                <td style="padding: 10px; border-bottom: 1px solid #eee; color: #ec4899; font-weight: bold;">€${totaalPrijs}</td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Bericht:</td>
+                <td style="padding: 10px; border-bottom: 1px solid #eee;">${safeBericht}</td>
               </tr>
             </table>
-            
-            <p style="color: #666; font-size: 14px;">
-              Vergeet niet om een betaallink te sturen naar ${safeEmail}!
-            </p>
             
             <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
             <p style="color: #999; font-size: 12px;">
@@ -103,7 +84,7 @@ serve(async (req: Request): Promise<Response> => {
     });
 
     const result = await emailResponse.json();
-    
+
     if (!emailResponse.ok) {
       console.error("Resend API error:", result);
       return new Response(
@@ -112,14 +93,14 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log("Notification email sent successfully:", result);
+    console.log("Contact notification email sent successfully:", result);
 
     return new Response(JSON.stringify(result), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   } catch (error: unknown) {
-    console.error("Error in notify-registration function:", error);
+    console.error("Error in notify-contact function:", error);
     return new Response(
       JSON.stringify({ error: "An unexpected error occurred" }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
