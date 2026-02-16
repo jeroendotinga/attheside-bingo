@@ -4,7 +4,7 @@ const steps = [
   {
     icon: CalendarCheck,
     number: "1",
-    title: "Jij boekt At The Side Bingo",
+    title: "Jij boekt De Grote Bingo Sing a Long Show",
     description: "Kies je datum en laat ons weten wat je wilt",
     color: "neon-pink",
   },

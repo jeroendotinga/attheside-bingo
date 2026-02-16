@@ -23,7 +23,7 @@ const Navigation = () => {
           <Link to="/" className="flex items-center">
             <img 
               src={logo} 
-              alt="At The Side Bingo" 
+              alt="De Grote Bingo Sing a Long Show" 
               className="h-12 sm:h-16 md:h-18 w-auto drop-shadow-[0_0_15px_rgba(236,72,153,0.4)] hover:drop-shadow-[0_0_20px_rgba(236,72,153,0.6)] transition-all duration-300"
             />
           </Link>
