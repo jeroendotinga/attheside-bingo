@@ -29,17 +29,26 @@ const Contact = () => {
     }
 
     setIsLoading(true);
-
-    // For now, we'll just show a success message
-    // You can add email sending logic via edge function later
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    setIsLoading(false);
-    setIsSubmitted(true);
-    toast({
-      title: "Bericht verzonden!",
-      description: "We nemen zo snel mogelijk contact met je op.",
-    });
+    try {
+      const { error } = await supabase.functions.invoke("notify-contact", {
+        body: { naam: formData.naam, email: formData.email, bericht: formData.bericht },
+      });
+      if (error) throw error;
+      setIsSubmitted(true);
+      toast({
+        title: "Bericht verzonden!",
+        description: "We nemen zo snel mogelijk contact met je op.",
+      });
+    } catch (err) {
+      console.error("Contact form error:", err);
+      toast({
+        title: "Er ging iets mis",
+        description: "Probeer het later opnieuw of mail ons direct.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
