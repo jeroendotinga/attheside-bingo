@@ -7,7 +7,7 @@ const reviews = [
     company: "Marketing Bureau Amsterdam",
   },
   {
-    text: "De hele zaal ging uit z'n dak. At The Side Bingo maakte ons event onvergetelijk.",
+    text: "De hele zaal ging uit z'n dak. De Grote Bingo Sing a Long Show maakte ons event onvergetelijk.",
     author: "Jeroen B.",
     company: "Tech Startup Utrecht",
   },

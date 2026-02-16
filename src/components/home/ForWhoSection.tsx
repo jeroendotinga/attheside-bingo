@@ -43,7 +43,7 @@ const ForWhoSection = () => {
             Voor <span className="text-neon-blue">wie</span> is het?
           </h2>
           <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-            At The Side Bingo past bij elk event en elke gelegenheid
+            De Grote Bingo Sing a Long Show past bij elk event en elke gelegenheid
           </p>
         </div>
 

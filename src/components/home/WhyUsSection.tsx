@@ -28,7 +28,7 @@ const WhyUsSection = () => {
     <section className="py-12 sm:py-16 px-4 sm:px-6 bg-card/50">
       <div className="max-w-4xl mx-auto">
         <h2 className="text-2xl sm:text-3xl font-bold text-foreground text-center mb-6 sm:mb-8">
-          Waarom <span className="text-neon-purple">At The Side Bingo</span>?
+          Waarom <span className="text-neon-purple">De Grote Bingo Sing a Long Show</span>?
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">

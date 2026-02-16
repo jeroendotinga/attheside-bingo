@@ -48,10 +48,10 @@ const WhatIsSection = () => {
         {/* Section header */}
         <div className="text-center mb-12 sm:mb-16">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Wat is <span className="text-neon-pink">At The Side Bingo</span>?
+            WAT IS DE <span className="text-neon-pink">GROTE BINGO SING A LONG SHOW</span>
           </h2>
           <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-            Geen saaie nummertjes afstrepen, maar een complete show vol energie
+            De Grote Bingo Sing a Long Show is een avond vol muziek, interactie en gezelligheid waar alles door elkaar loopt: bingo, meezingen, karaoke en dansen.
           </p>
         </div>
 

@@ -17,7 +17,7 @@ const HomeHero = () => {
           <div className="absolute inset-0 bg-neon-pink/20 blur-3xl rounded-full scale-110" />
           <img 
             src={logo} 
-            alt="At The Side Bingo" 
+            alt="De Grote Bingo Sing a Long Show" 
             className="relative w-full max-w-xs sm:max-w-md md:max-w-lg mx-auto animate-float drop-shadow-[0_0_30px_rgba(236,72,153,0.5)]" 
           />
         </div>

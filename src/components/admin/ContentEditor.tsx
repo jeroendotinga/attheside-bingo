@@ -21,7 +21,7 @@ const CONTENT_SECTIONS: ContentSection[] = [
   {
     key: 'homepage_about',
     label: 'Wat is het?',
-    description: 'Uitleg over At The Side Bingo',
+    description: 'Uitleg over De Grote Bingo Sing a Long Show',
   },
   {
     key: 'homepage_audience',
