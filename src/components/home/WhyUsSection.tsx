@@ -31,7 +31,7 @@ const WhyUsSection = () => {
           Waarom <span className="text-neon-purple">At The Side Bingo</span>?
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           {reasons.map((reason, index) => (
             <div
               key={index}
