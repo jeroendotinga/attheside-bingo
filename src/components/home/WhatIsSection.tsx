@@ -1,4 +1,6 @@
 import { Mic2, Music, Users, Gift } from "lucide-react";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 const features = [
   {
@@ -42,6 +44,8 @@ const iconBgClasses = {
 };
 
 const WhatIsSection = () => {
+  const { content } = useSiteContent('homepage_what');
+
   return (
     <section className="py-16 sm:py-24 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto">
@@ -50,9 +54,12 @@ const WhatIsSection = () => {
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-4">
             WAT IS DE <span className="text-neon-pink">GROTE BINGO SING A LONG SHOW</span>
           </h2>
-          <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-            De Grote Bingo Sing a Long Show is een avond vol muziek, interactie en gezelligheid waar alles door elkaar loopt: bingo, meezingen, karaoke en dansen.
-          </p>
+          {content && (
+            <div
+              className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto [&_p]:mb-2 [&_p]:last:mb-0"
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
+            />
+          )}
         </div>
 
         {/* Feature cards */}

@@ -1,4 +1,6 @@
 import { Star, Quote } from "lucide-react";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 const reviews = [
   {
@@ -19,6 +21,8 @@ const reviews = [
 ];
 
 const ReviewsSection = () => {
+  const { content } = useSiteContent('homepage_reviews');
+
   return (
     <section className="py-16 sm:py-24 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto">
@@ -32,9 +36,12 @@ const ReviewsSection = () => {
               <Star key={i} className="w-6 h-6 sm:w-7 sm:h-7 text-neon-gold fill-neon-gold" />
             ))}
           </div>
-          <p className="text-muted-foreground text-base sm:text-lg">
-            Al gespeeld op 100+ events door heel Nederland
-          </p>
+          {content && (
+            <div
+              className="text-muted-foreground text-base sm:text-lg [&_p]:mb-2 [&_p]:last:mb-0"
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
+            />
+          )}
         </div>
 
         {/* Reviews grid */}
