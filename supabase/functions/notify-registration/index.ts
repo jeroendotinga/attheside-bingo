@@ -58,7 +58,7 @@ serve(async (req: Request): Promise<Response> => {
         "Authorization": `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "De Grote Bingo Sing a Long Show <onboarding@resend.dev>",
+        from: "De Grote Bingo Sing a Long Show <info@singalongbingoshow.nl>",
         to: ["info@singalongbingoshow.nl"],
         subject: `Nieuwe aanmelding: ${safeNaam} (${aantalKaarten} kaart${aantalKaarten > 1 ? 'en' : ''})`,
         html: `
