@@ -1,4 +1,6 @@
 import { Building2, Beer, PartyPopper, Tent, GraduationCap, Users } from "lucide-react";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 const audiences = [
   {
@@ -34,6 +36,8 @@ const audiences = [
 ];
 
 const ForWhoSection = () => {
+  const { content } = useSiteContent('homepage_forwho');
+
   return (
     <section className="py-16 sm:py-24 px-4 sm:px-6 bg-card/50">
       <div className="max-w-6xl mx-auto">
@@ -42,9 +46,12 @@ const ForWhoSection = () => {
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-4">
             Voor <span className="text-neon-blue">wie</span> is het?
           </h2>
-          <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-            De Grote Bingo Sing a Long Show past bij elk event en elke gelegenheid
-          </p>
+          {content && (
+            <div
+              className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto [&_p]:mb-2 [&_p]:last:mb-0"
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
+            />
+          )}
         </div>
 
         {/* Audience grid */}

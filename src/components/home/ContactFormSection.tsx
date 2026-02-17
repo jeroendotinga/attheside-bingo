@@ -6,8 +6,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Send, CheckCircle, Mail, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 const ContactFormSection = () => {
+  const { content: contactContent } = useSiteContent('homepage_contact');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -65,9 +68,12 @@ const ContactFormSection = () => {
             Klaar voor een bingo die{" "}
             <span className="text-neon-pink">niemand vergeet</span>?
           </h2>
-          <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-            Neem contact op en we bespreken de mogelijkheden voor jouw event
-          </p>
+          {contactContent && (
+            <div
+              className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto [&_p]:mb-2 [&_p]:last:mb-0"
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(contactContent) }}
+            />
+          )}
         </div>
 
         {isSubmitted ? (

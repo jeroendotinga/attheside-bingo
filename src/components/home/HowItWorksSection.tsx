@@ -1,4 +1,6 @@
 import { CalendarCheck, Truck, PartyPopper, Smile } from "lucide-react";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 const steps = [
   {
@@ -59,6 +61,8 @@ const colorClasses = {
 };
 
 const HowItWorksSection = () => {
+  const { content } = useSiteContent('homepage_howitworks');
+
   return (
     <section id="hoe-werkt-het" className="py-16 sm:py-24 px-4 sm:px-6 scroll-mt-20">
       <div className="max-w-6xl mx-auto">
@@ -67,9 +71,12 @@ const HowItWorksSection = () => {
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-4">
             Zo <span className="text-neon-gold">werkt</span> het
           </h2>
-          <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-            In 4 simpele stappen naar een onvergetelijk event
-          </p>
+          {content && (
+            <div
+              className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto [&_p]:mb-2 [&_p]:last:mb-0"
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
+            />
+          )}
         </div>
 
         {/* Steps */}

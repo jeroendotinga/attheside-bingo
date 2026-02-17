@@ -1,4 +1,6 @@
 import { Check, Sparkles, Zap, Heart, Shield, Users } from "lucide-react";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 const reasons = [
   {
@@ -24,12 +26,20 @@ const reasons = [
 ];
 
 const WhyUsSection = () => {
+  const { content } = useSiteContent('homepage_whyus');
+
   return (
     <section className="py-12 sm:py-16 px-4 sm:px-6 bg-card/50">
       <div className="max-w-4xl mx-auto">
-        <h2 className="text-2xl sm:text-3xl font-bold text-foreground text-center mb-6 sm:mb-8">
+        <h2 className="text-2xl sm:text-3xl font-bold text-foreground text-center mb-4">
           Waarom <span className="text-neon-purple">De Grote Bingo Sing a Long Show</span>?
         </h2>
+        {content && (
+          <div
+            className="text-muted-foreground text-base sm:text-lg text-center mb-6 sm:mb-8 [&_p]:mb-2 [&_p]:last:mb-0"
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
+          />
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           {reasons.map((reason, index) => (

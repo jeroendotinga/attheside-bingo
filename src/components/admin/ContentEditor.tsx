@@ -19,14 +19,44 @@ const CONTENT_SECTIONS: ContentSection[] = [
     description: 'Eerste tekst onder de hero sectie',
   },
   {
-    key: 'homepage_about',
+    key: 'homepage_what',
     label: 'Wat is het?',
+    description: 'Subtekst bij "Wat is de Grote Bingo Sing a Long Show"',
+  },
+  {
+    key: 'homepage_about',
+    label: 'Over ons',
     description: 'Uitleg over De Grote Bingo Sing a Long Show',
   },
   {
-    key: 'homepage_audience',
+    key: 'homepage_forwho',
     label: 'Voor wie?',
+    description: 'Subtekst bij "Voor wie is het?"',
+  },
+  {
+    key: 'homepage_audience',
+    label: 'Doelgroep',
     description: 'Doelgroepen en wie er welkom is',
+  },
+  {
+    key: 'homepage_howitworks',
+    label: 'Zo werkt het',
+    description: 'Subtekst bij "Zo werkt het"',
+  },
+  {
+    key: 'homepage_whyus',
+    label: 'Waarom wij?',
+    description: 'Subtekst bij "Waarom De Grote Bingo Sing a Long Show"',
+  },
+  {
+    key: 'homepage_reviews',
+    label: 'Reviews',
+    description: 'Subtekst bij de reviews sectie',
+  },
+  {
+    key: 'homepage_contact',
+    label: 'Contact',
+    description: 'Subtekst bij het contactformulier',
   },
 ];
 
@@ -61,8 +91,10 @@ const ContentEditor = () => {
     
     const { error } = await supabase
       .from('site_content')
-      .update({ content_html: contents[contentKey] || '' })
-      .eq('content_key', contentKey);
+      .upsert(
+        { content_key: contentKey, content_html: contents[contentKey] || '' },
+        { onConflict: 'content_key' }
+      );
 
     setSaving(null);
 
