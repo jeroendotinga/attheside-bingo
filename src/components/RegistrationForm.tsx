@@ -148,6 +148,13 @@ const RegistrationForm = () => {
 
     setIsLoading(false);
     setIsSubmitted(true);
+    // Scroll to the thank-you message
+    setTimeout(() => {
+      const element = document.getElementById('aanmelden');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
     toast({
       title: "Aanmelding ontvangen!",
       description: `Dank voor je aanmelding voor ${amount} kaart${amount > 1 ? 'en' : ''} (€${totalPrice}). Check je email voor de betaallink.`,
