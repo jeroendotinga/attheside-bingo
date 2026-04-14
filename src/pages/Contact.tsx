@@ -92,11 +92,11 @@ const Contact = () => {
               <div className="mb-8 p-4 sm:p-6 rounded-xl bg-card/50 border border-border text-center">
                 <p className="text-muted-foreground mb-3">Je kunt ook direct mailen naar:</p>
                 <a 
-                  href="mailto:info@atthesidebingo.nl" 
+                  href="mailto:info@singalongbingoshow.nl"
                   className="inline-flex items-center gap-2 text-neon-pink hover:text-neon-pink/80 font-semibold text-lg transition-colors"
                 >
                   <Mail className="w-5 h-5" />
-                  info@atthesidebingo.nl
+                  info@singalongbingoshow.nl
                 </a>
               </div>
 

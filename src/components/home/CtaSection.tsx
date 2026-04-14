@@ -47,11 +47,11 @@ const CtaSection = () => {
           {/* Contact info */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-muted-foreground text-sm sm:text-base">
             <a 
-              href="mailto:info@atthesidebingo.nl" 
+              href="mailto:info@singalongbingoshow.nl"
               className="flex items-center gap-2 hover:text-neon-pink transition-colors"
             >
               <Mail className="w-4 h-4" />
-              info@atthesidebingo.nl
+              info@singalongbingoshow.nl
             </a>
             <a 
               href="tel:+31612345678" 
