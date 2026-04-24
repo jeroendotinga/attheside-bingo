@@ -157,7 +157,7 @@ const RegistrationForm = () => {
     }, 100);
     toast({
       title: "Aanmelding ontvangen!",
-      description: `Dank voor je aanmelding voor ${amount} kaart${amount > 1 ? 'en' : ''} (€${totalPrice}). Check je email voor de betaallink.`,
+      description: `Je aanmelding voor ${amount} kaart${amount > 1 ? 'en' : ''} (€${totalPrice}) is ontvangen. We controleren je gegevens eerst handmatig.`,
     });
   };
 
@@ -175,8 +175,10 @@ const RegistrationForm = () => {
           <div className="bg-card border border-neon-pink/30 rounded-2xl p-6 sm:p-8 text-center glow-pink">
             <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-neon-pink mx-auto mb-4" />
             <h3 className="text-xl sm:text-2xl font-bold mb-4">Bedankt voor je aanmelding!</h3>
-            <p className="text-muted-foreground text-sm sm:text-base">
-              Dank voor je aanmelding. In de mail krijg je een bevestiging met daarin een betaallink.
+            <p className="text-muted-foreground text-sm sm:text-base whitespace-pre-line">
+              Je aanmelding is in goede orde ontvangen.{"\n\n"}
+              We controleren je gegevens eerst handmatig. Zodra deze is goedgekeurd, ontvang je van ons een bevestigingsmail met daarin de betaalinformatie. Dit kan 1 tot 2 werkdagen duren.{"\n\n"}
+              Heb je in de tussentijd vragen? Neem gerust contact met ons op.
             </p>
           </div>
         </div>
@@ -373,7 +375,7 @@ const RegistrationForm = () => {
           </Button>
           
           <p className="text-xs sm:text-sm text-muted-foreground text-center">
-            Na aanmelding ontvang je een bevestiging met betaallink per email.
+            Na handmatige controle ontvang je een bevestiging met betaallink per email.
           </p>
         </form>
       </div>
