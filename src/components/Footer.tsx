@@ -16,7 +16,7 @@ const Footer = () => {
           Bingo. Karaoke. Meezingen. <span className="text-neon-pink font-semibold">Feest.</span>
         </p>
         <p className="text-xs sm:text-sm text-muted-foreground">
-          © {new Date().getFullYear()} De Grote Bingo Sing a Long Show. Alle rechten voorbehouden.
+          © {new Date().getFullYear()} De Grote Bingo Sing-Along Show. Alle rechten voorbehouden.
         </p>
       </div>
     </footer>
