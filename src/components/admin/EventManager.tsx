@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -174,8 +175,114 @@ const EventManager = () => {
     fetchEvents();
   };
 
+  const now = new Date();
+  const upcomingEvents = eventsWithStats.filter(e => new Date(e.event_date) >= now);
+  const pastEvents = eventsWithStats.filter(e => new Date(e.event_date) < now);
+
   const totalTicketsSold = eventsWithStats.reduce((sum, e) => sum + e.tickets_sold, 0);
   const totalRevenue = eventsWithStats.reduce((sum, e) => sum + e.revenue, 0);
+
+  const renderEventTable = (eventList: EventWithStats[]) => (
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow className="border-border">
+            <TableHead className="text-foreground">Event</TableHead>
+            <TableHead className="text-foreground">Datum</TableHead>
+            <TableHead className="text-foreground hidden md:table-cell">Locatie</TableHead>
+            <TableHead className="text-foreground text-center">Tickets</TableHead>
+            <TableHead className="text-foreground text-right">Omzet</TableHead>
+            <TableHead className="text-foreground text-center">Status</TableHead>
+            <TableHead className="text-foreground text-right">Acties</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {loading ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                Laden...
+              </TableCell>
+            </TableRow>
+          ) : eventList.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                Geen events
+              </TableCell>
+            </TableRow>
+          ) : (
+            eventList.map((event) => {
+              const isPast = new Date(event.event_date) < now;
+              return (
+                <TableRow key={event.id} className="border-border">
+                  <TableCell className="font-medium text-foreground">
+                    <div>
+                      <p>{event.title}</p>
+                      <p className="text-xs text-muted-foreground">€{event.price_per_ticket} per ticket</p>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {new Date(event.event_date).toLocaleDateString('nl-NL', {
+                      weekday: 'short',
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground hidden md:table-cell">{event.location_name}</TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <Ticket className="w-4 h-4 text-neon-pink" />
+                      <span className="font-semibold text-neon-pink">{event.tickets_sold}</span>
+                      {event.max_tickets && (
+                        <span className="text-muted-foreground text-sm">/ {event.max_tickets}</span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right font-semibold text-neon-gold">
+                    €{event.revenue}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {isPast ? (
+                      <span className="px-2 py-1 rounded-full text-xs font-semibold bg-muted text-muted-foreground">
+                        Verlopen
+                      </span>
+                    ) : (
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        event.is_active
+                          ? 'bg-neon-blue/20 text-neon-blue'
+                          : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {event.is_active ? 'Actief' : 'Inactief'}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditDialog(event)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(event.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -186,8 +293,8 @@ const EventManager = () => {
           <p className="text-2xl sm:text-3xl font-bold text-foreground">{eventsWithStats.length}</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
-          <p className="text-muted-foreground text-xs sm:text-sm">Actieve Events</p>
-          <p className="text-2xl sm:text-3xl font-bold text-neon-blue">{eventsWithStats.filter(e => e.is_active).length}</p>
+          <p className="text-muted-foreground text-xs sm:text-sm">Aankomende Events</p>
+          <p className="text-2xl sm:text-3xl font-bold text-neon-blue">{upcomingEvents.filter(e => e.is_active).length}</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4 sm:p-6">
           <p className="text-muted-foreground text-xs sm:text-sm">Totaal Tickets Verkocht</p>
@@ -331,96 +438,22 @@ const EventManager = () => {
         </Dialog>
       </div>
 
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-border">
-              <TableHead className="text-foreground">Event</TableHead>
-              <TableHead className="text-foreground">Datum</TableHead>
-              <TableHead className="text-foreground hidden md:table-cell">Locatie</TableHead>
-              <TableHead className="text-foreground text-center">Tickets</TableHead>
-              <TableHead className="text-foreground text-right">Omzet</TableHead>
-              <TableHead className="text-foreground text-center">Status</TableHead>
-              <TableHead className="text-foreground text-right">Acties</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  Laden...
-                </TableCell>
-              </TableRow>
-            ) : eventsWithStats.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  Nog geen events
-                </TableCell>
-              </TableRow>
-            ) : (
-              eventsWithStats.map((event) => (
-                <TableRow key={event.id} className="border-border">
-                  <TableCell className="font-medium text-foreground">
-                    <div>
-                      <p>{event.title}</p>
-                      <p className="text-xs text-muted-foreground">€{event.price_per_ticket} per ticket</p>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {new Date(event.event_date).toLocaleDateString('nl-NL', {
-                      weekday: 'short',
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground hidden md:table-cell">{event.location_name}</TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <Ticket className="w-4 h-4 text-neon-pink" />
-                      <span className="font-semibold text-neon-pink">{event.tickets_sold}</span>
-                      {event.max_tickets && (
-                        <span className="text-muted-foreground text-sm">/ {event.max_tickets}</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right font-semibold text-neon-gold">
-                    €{event.revenue}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                      event.is_active 
-                        ? 'bg-neon-blue/20 text-neon-blue' 
-                        : 'bg-muted text-muted-foreground'
-                    }`}>
-                      {event.is_active ? 'Actief' : 'Inactief'}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditDialog(event)}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(event.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <Tabs defaultValue="upcoming">
+        <TabsList className="mb-4">
+          <TabsTrigger value="upcoming">
+            Aankomend ({upcomingEvents.length})
+          </TabsTrigger>
+          <TabsTrigger value="past">
+            Verlopen ({pastEvents.length})
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="upcoming">
+          {renderEventTable(upcomingEvents)}
+        </TabsContent>
+        <TabsContent value="past">
+          {renderEventTable(pastEvents)}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
